@@ -67,19 +67,19 @@ final class XmlSignatureVerifier
      */
     public function verifyDocument(DOMDocument $xml): bool
     {
-        $signatureAlgorithm = $this->getDocumentAlgorithm($xml, '//ds:SignedInfo/ds:SignatureMethod');
-        $digestAlgorithm = $this->getDocumentAlgorithm($xml, '//ds:DigestMethod');
+        $signatureAlgorithm = $this->getDocumentAlgorithm($xml, '//xmlns:SignedInfo/xmlns:SignatureMethod');
+        $digestAlgorithm = $this->getDocumentAlgorithm($xml, '//xmlns:DigestMethod');
         $signatureValue = $this->getSignatureValue($xml);
         $xpath = new DOMXPath($xml);
-        $xpath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');
+        $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
 
         /** @var DOMNodeList $nodes */
-        $nodes = $xpath->evaluate('//ds:Signature/ds:SignedInfo');
+        $nodes = $xpath->evaluate('//xmlns:Signature/xmlns:SignedInfo');
 
         /** @var DOMElement $signedInfoNode */
         foreach ($nodes as $signedInfoNode) {
             // Remove SignatureValue value
-            $signatureValueElement = $this->xmlReader->queryDomNode($xpath, '//ds:SignatureValue', $signedInfoNode);
+            $signatureValueElement = $this->xmlReader->queryDomNode($xpath, '//xmlns:SignatureValue', $signedInfoNode);
             $signatureValueElement->nodeValue = '';
 
             $canonicalData = $signedInfoNode->C14N(true, false);
@@ -91,10 +91,7 @@ final class XmlSignatureVerifier
             $canonicalData = $xml2->C14N(true, false);
 
             $isValidSignature = $this->cryptoVerifier->verify($canonicalData, $signatureValue, $signatureAlgorithm);
-//            dd([$isValidSignature,
-//                $canonicalData,
-//                $signatureValue,
-//                $signatureAlgorithm]);
+
             if (!$isValidSignature) {
                 // The XML signature is not valid
                 return false;
@@ -119,7 +116,7 @@ final class XmlSignatureVerifier
 
         // Remove signature elements
         /** @var DOMElement $signatureNode */
-        foreach ($xpath->query('//ds:Signature') ?: [] as $signatureNode) {
+        foreach ($xpath->query('//xmlns:Signature') ?: [] as $signatureNode) {
             if (!$signatureNode->parentNode) {
                 continue;
             }
@@ -148,7 +145,7 @@ final class XmlSignatureVerifier
     private function getDocumentAlgorithm(DOMDocument $xml, string $expression): string
     {
         $xpath = new DOMXPath($xml);
-        $xpath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');
+        $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
         $xpath->registerNamespace('Algorithm', 'http://www.w3.org/2001/10/xml-exc-c14n#');
 
         $signatureMethodNodes = $xpath->query($expression);
@@ -189,10 +186,10 @@ final class XmlSignatureVerifier
     private function getSignatureValue(DOMDocument $xml): string
     {
         $xpath = new DOMXPath($xml);
-        $xpath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');
+        $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
 
         // Find the SignatureValue node
-        $signatureNodes = $xpath->query('//ds:Signature/ds:SignatureValue');
+        $signatureNodes = $xpath->query('//xmlns:Signature/xmlns:SignatureValue');
 
         // Throw an exception if no signature was found.
         if (!$signatureNodes || $signatureNodes->length < 1) {
@@ -235,10 +232,10 @@ final class XmlSignatureVerifier
     private function getDigestValue(DOMDocument $xml): string
     {
         $xpath = new DOMXPath($xml);
-        $xpath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');
+        $xpath->registerNamespace('xmlns', 'http://www.w3.org/2000/09/xmldsig#');
 
         // Find the DigestValue node
-        $signatureNodes = $xpath->query('//ds:Signature/ds:SignedInfo/ds:Reference/ds:DigestValue');
+        $signatureNodes = $xpath->query('//xmlns:Signature/xmlns:SignedInfo/xmlns:Reference/xmlns:DigestValue');
 
         // Throw an exception if no signature was found.
         if (!$signatureNodes || $signatureNodes->length < 1) {
